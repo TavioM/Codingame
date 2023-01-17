@@ -1,49 +1,106 @@
 #include "file.h"
 
-int	find_closest(t_list *lst)
+void	print_list(t_list *lst)
 {
-	int		min;
-	int		diff;
-	t_list	*tmp;
-
-	min = 2147483647;
+	int tmp;
+	lst = ft_lstfirst(lst);
 	while (lst)
 	{
-		tmp = lst->next;
-//		fprintf(stderr, "%d", *((int *)(lst->data)));
-//		if (lst->next)
-//			fprintf(stderr, ", ");
-//		else
-//			fprintf(stderr, " ");
-		while (tmp)
-		{
-			diff = abs(*((int *)(tmp->data)) - *((int *)(lst->data)));
-			if (diff < min)
-				min = diff;
-			tmp = tmp->next;
-		}
+		tmp = *((int *)(lst->data));
+		fprintf(stderr, "%d->", tmp);
 		lst = lst->next;
 	}
 	fprintf(stderr, "\n");
-	return (min);
+}
+
+int		compare(t_list *lst, int n)
+{
+	int tmp;
+	int	prev;
+	int	next;
+
+//	print_list(lst);
+	tmp = *((int *)(lst->data));
+	if (lst && lst->prev)
+	{
+		prev = *((int *)(lst->prev->data));
+		fprintf(stderr, "prev = %d, tmp = %d, n = %d\n", prev, tmp, n);
+		if (tmp - prev < n)
+			n = tmp - prev;
+	}
+	if (lst && lst->next)
+	{
+		next = *((int *)(lst->next->data));
+		fprintf(stderr, "next = %d, tmp = %d, n = %d\n", next, tmp, n);
+		if (next - tmp < n)
+			n = next - tmp;
+	}
+	return n;
+}
+
+t_list	*add_sort(t_list *lst, t_list *new)
+{
+	int		nb;
+	int		tmp;
+	t_list	*cpy;
+
+	if (lst == 0)
+		return (new);
+	nb = *((int *)(new->data));
+	tmp = *((int *)(lst->data));
+	cpy = lst;
+//	fprintf(stderr, "(before loop) nb = %d, tmp = %d\n", nb, tmp);
+	while (nb > tmp)
+	{
+		if (lst->next == 0)
+		{
+			lst->next = new;
+			new->prev = lst;
+			return (cpy);
+		}
+		lst = lst->next;
+		tmp = *((int *)(lst->data));
+	}
+//	fprintf(stderr, "(after loop) nb = %d, tmp = %d\n", nb, tmp);
+	if (lst != cpy)
+	{
+		new->next = lst->next;
+		lst->next->prev = new;
+		new->prev = lst;
+		lst->next = new;
+		return (cpy);
+	}
+	else
+	{
+		new->next = lst;
+		new->prev = 0;
+		lst->prev = new;
+		return (new);
+	}
 }
 
 int	main()
 {
-	int		n;
 	int		*p;
+	int		n;
+	int		min;
 	t_list	*lst;
 	t_list	*tmp;
 
+	min = 2147483647;
+	lst = 0;
 	scanf("%d", &n);
 	for (int i = 0; i < n; i++)
 	{
 		p = malloc(sizeof(int));
 		scanf("%d", p);
 		tmp = ft_lstnew(p);
-		lst = ft_lstadd_back(lst, tmp);
+//		lst = ft_lstadd_back(lst, tmp);
+		lst = add_sort(lst, tmp);
+		min = compare(tmp, min);
+		if (min == 1)
+			break;
 	}
-	n = find_closest(lst);
-	printf("%d\n", n);
+	printf("%d\n", min);
 	return (0);
 }
