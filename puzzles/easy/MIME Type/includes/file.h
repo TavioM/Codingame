@@ -3,6 +3,12 @@
 #include <string.h>
 #include <stdbool.h>
 
+typedef struct	s_type
+{
+	char *EXT;
+	char *MT;
+}				t_type;
+
 typedef struct s_list
 {
 	struct s_list	*next;
