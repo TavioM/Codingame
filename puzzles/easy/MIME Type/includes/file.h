@@ -7,8 +7,8 @@
 
 typedef struct	s_type
 {
-	char *EXT;
-	char *MT;
+	char EXT[11];
+	char MT[51];
 }				t_type;
 
 typedef struct s_list

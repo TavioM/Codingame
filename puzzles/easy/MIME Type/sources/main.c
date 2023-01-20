@@ -24,8 +24,6 @@ t_list	*add_type(t_list *types, char EXT[], char MT[])
 	char	*tmp;
 
 	t = malloc(sizeof(t_type));
-	t->EXT = malloc(sizeof(char) * 11);
-	t->MT = malloc(sizeof(char) * 51);
 	copy_type(EXT, MT, t->EXT, t->MT);
 	new = ft_lstnew(t);
 	if (!types)
@@ -126,7 +124,8 @@ int main()
 		char EXT[11];
 		char MT[51];
 		scanf("%s%s", EXT, MT); fgetc(stdin);
-		types = add_type(types, EXT, MT);
+		if (i < 1000)
+			types = add_type(types, EXT, MT);
 	}
 	end = clock();
 	sec = (float)(end - start) / CLOCKS_PER_SEC;
