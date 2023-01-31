@@ -38,6 +38,48 @@ void	print(char grid[3][3])
 	fprintf(stderr, "\n");
 }
 
+void	make_move(char grid[3][3])
+{
+	if (grid[1][1] == '.')
+	{
+		printf("1 1\n");
+		return;
+	}
+	if (grid[2][0] == '.')
+	{
+		printf("2 0\n");
+		return;
+	}
+	if (grid[0][2] == '.')
+	{
+		printf("0 2\n");
+		return;
+	}
+	if (grid[2][2] == '.')
+	{
+		printf("2 2\n");
+		return;
+	}
+	if (grid[0][0] == '.')
+	{
+		printf("0 0\n");
+		return;
+	}
+
+	for (int j = 0; j < 3; j++)
+	{
+		for (int i = 0; i < 3; i++)
+		{
+			if (grid[j][i] == '.')
+			{
+				printf("%d %d\n", j, i);
+				grid[j][i] = 'o';
+				return;
+			}
+		}
+	}
+}
+
 int main()
 {
 	int		opp_row, opp_col;
@@ -47,7 +89,6 @@ int main()
 	set_grid(grid);
 	while (1)
 	{
-		int tmp = 0;
 		reset_grid(grid);
 		scanf("%d%d", &opp_row, &opp_col);
 		fprintf(stderr, "opp_row = %d, opp_col = %d\n", opp_row, opp_col);
@@ -63,15 +104,9 @@ int main()
 			int col;
 			scanf("%d%d", &row, &col);
 			grid[row][col] = '.';
-			if (!tmp)
-			{
-				printf("%d %d\n", row, col);
-				grid[row][col] = 'o';
-				print(grid);
-				tmp++;
-			}
 		}
+		make_move(grid);
+		print(grid);
 	}
-
 	return 0;
 }
