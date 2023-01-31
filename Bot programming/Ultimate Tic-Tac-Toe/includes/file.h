@@ -3,6 +3,8 @@
 #include <string.h>
 #include <stdbool.h>
 
+#define GRID(x, y) grid[y/3][x/3][y%3][x%3]
+
 typedef struct s_list
 {
 	struct s_list	*next;
