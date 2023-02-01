@@ -5,11 +5,22 @@
 #include <ctype.h>
 #include <time.h>
 
-typedef struct s_list
+typedef struct	s_defib
+{
+	char	DEFIB[257];
+	int		id;
+	char	*name;
+	char	*address;
+	char	*contact;
+    float	lon;
+	float	lat;
+}				t_defib;
+
+typedef struct	s_list
 {
 	struct s_list	*next;
 	struct s_list	*prev;
-	void			*data;	
+	void			*data;
 }				t_list;
 
 //	ft_lst.c
