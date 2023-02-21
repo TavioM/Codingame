@@ -8,10 +8,7 @@
 typedef struct	s_defib
 {
 	char	DEFIB[257];
-	int		id;
-	char	*name;
-	char	*address;
-	char	*contact;
+	char	name[128];
     float	lon;
 	float	lat;
 }				t_defib;
