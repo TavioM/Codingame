@@ -3,7 +3,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <ctype.h>
-#include <time.h>
+#include <math.h>
 
 typedef struct	s_defib
 {
