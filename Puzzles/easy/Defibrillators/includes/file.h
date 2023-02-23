@@ -5,12 +5,14 @@
 #include <ctype.h>
 #include <math.h>
 
+#define PI 3.141592654
+
 typedef struct	s_defib
 {
 	char	DEFIB[257];
 	char	name[128];
-    float	lon;
-	float	lat;
+    double	lon;
+	double	lat;
 }				t_defib;
 
 typedef struct	s_list

@@ -12,7 +12,7 @@ SRCS		=	main.c ft_lst.c
 #IF YOU HAVE HEADER FILES YOU ABSOLUTELY NEED TO ADD THEM IN THE INC_FILES VAR
 INC_FILES	= 	file.h
 INC_PATH	=	includes/
-INC			=	-I $(INC_PATH)
+INC			=	-lm -I $(INC_PATH)
 
 
 SRCS_PATH	=	./sources/
