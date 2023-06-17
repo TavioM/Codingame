@@ -40,9 +40,9 @@ int main()
 //	std::vector<int> player3;
 //	std::vector<int> player4;
 
-	std::vector <std::vector <std::pair <int, int>>*> players;
-	players.push_back(&self);
-	players.push_back(&player2);
+//	std::vector <std::vector <std::pair <int, int>>> players;
+//	players.push_back(&self);
+//	players.push_back(&player2);
 
 	std::map<int, std::map<int, bool>> grid;
 	for (int i = 0; i < 30; i++)
@@ -66,6 +66,7 @@ int main()
 			int yn; // starting Y coordinate of lightcycle (can be the same as Y0 if you play before this player)
 			std::cin >> x0 >> y0 >> xn >> yn; std::cin.ignore();
 
+			grid[x0][y0] = true;
 			grid[xn][yn] = true;
 
 			std::cerr << "x0: " << x0 << ", ";
