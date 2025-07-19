@@ -132,19 +132,59 @@ fn main() {
             {
                 //eprintln!("agent_count: {}", agent_count);
                 let mut wet: i32 = -1;
-                let mut ag: i32 = -1;
+                let mut shoot_id: i32 = -1;
+                let mut cover: i32 = 42;
                 let mut move_x: i32 = agents[j].x;
                 let mut move_y: i32 = agents[j].y;
                 for i in 0..agent_count as usize
                 {
-                    if agents[i].wetness > wet && agents[i].player != my_id && get_distance(&(agents[j]), &(agents[i])) <= agents[j].optimal_range
+                    if agents[i].player != my_id && get_distance(&(agents[j]), &(agents[i])) <= agents[j].optimal_range
                     {
-                        wet = agents[i].wetness;
-                        ag = agents[i].id as i32;
+                        if agents[j].x < agents[i].x
+                        {
+                            eprintln!("agent: {}, cover: {}", agents[j].id, grid[(agents[i].y * width + agents[i].x - 1) as usize].cover);
+                            if grid[(agents[i].y * width + agents[i].x - 1) as usize].cover < cover
+                            {
+                                cover = grid[(agents[i].y * width + agents[i].x - 1) as usize].cover;
+                                shoot_id = agents[i].id;
+                            }
+                        }
+                        else
+                        {
+                            if grid[(agents[i].y * width + agents[i].x + 1) as usize].cover < cover
+                            {
+                                cover = grid[(agents[i].y * width + agents[i].x + 1) as usize].cover;
+                                shoot_id = agents[i].id;
+                            }
+                        }
+                        
+//                        wet = agents[i].wetness;
+                        shoot_id = agents[i].id as i32;
                     }
-                    if 
                 }
-            println!("SHOOT {}; MOVE {} {}; MESSAGE {}", ag, move_x, move_y, debug);
+                if agents[j].x < 6
+                {
+                    if grid[((agents[j].y + 1) * width + (agents[j].x + 1)) as usize].cover > grid[((agents[j].y - 1) * width + (agents[j].x + 1)) as usize].cover
+                    {
+                        move_y += 1;
+                    }
+                    else
+                    {
+                        move_y -= 1;
+                    }
+                }
+                else
+                {
+                    if grid[((agents[j].y + 1) * width + (agents[j].x - 1)) as usize].cover > grid[((agents[j].y - 1) * width + (agents[j].x - 1)) as usize].cover
+                    {
+                        move_y += 1;
+                    }
+                    else
+                    {
+                        move_y -= 1;
+                    }
+                }
+            println!("SHOOT {}; MOVE {} {}; MESSAGE {}", shoot_id, move_x, move_y, debug);
             debug += 1;
             }
         }
