@@ -1,33 +1,49 @@
 use std::io;
 use std::cmp;
 
-//static mut height: i32 = -1;
-//static mut width: i32 = -1;
-
 macro_rules! parse_input {
     ($x:expr, $t:ident) => ($x.trim().parse::<$t>().unwrap())
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
+struct Coords
+{
+    x: i32,
+    y: i32,
+}
+
+#[derive(Debug, Copy, Clone)]
 struct Agent
 {
     id: i32,
     player: i32,
-    x: i32,
-    y: i32,
+    pos: Coords,
     cooldown: i32, // Number of turns before this agent can shoot
     splash_bombs: i32,
     wetness: i32, // Damage (0-100) this agent has taken
     optimal_range: i32, // Maximum manhattan distance for greatest damage output
     soaking_power: i32, // Damage output within optimal conditions
+    alive: bool,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 struct Tile
 {
-    x: i32,
-    y: i32,
+    pos: Coords,
     cover: i32,
+}
+
+fn set_dead(ag: &mut Vec<Agent>)
+{
+    for i in 0..ag.len()
+    {
+        ag[i].alive = false;
+    }
+}
+
+fn remove_dead(ag: &mut Vec<Agent>)
+{
+    ag.retain_mut(|i| i.alive == true);
 }
 
 fn update_agent(agents: &mut Vec<Agent>, id: i32, x: i32, y: i32, cooldown: i32, splash_bombs: i32, wetness: i32)
@@ -37,18 +53,40 @@ fn update_agent(agents: &mut Vec<Agent>, id: i32, x: i32, y: i32, cooldown: i32,
     {
         i += 1;
     }
-    agents[i].x = x;
-    agents[i].y = y;
+    agents[i].pos.x = x;
+    agents[i].pos.y = y;
     agents[i].cooldown = cooldown;
     agents[i].splash_bombs = splash_bombs;
     agents[i].wetness = wetness;
+    agents[i].alive = true;
 }
 
-fn get_distance(agent_1: &Agent, agent_2: &Agent) -> i32
+fn get_dist(agent_1: &Agent, agent_2: &Agent) -> i32
 {
     return
-    (cmp::max(agent_1.x, agent_2.x) - cmp::min(agent_1.x, agent_2.x))
-    + (cmp::max(agent_1.y, agent_2.y) - cmp::min(agent_1.y, agent_2.y))
+    (cmp::max(agent_1.pos.x, agent_2.pos.x) - cmp::min(agent_1.pos.x, agent_2.pos.x))
+    + (cmp::max(agent_1.pos.y, agent_2.pos.y) - cmp::min(agent_1.pos.y, agent_2.pos.y))
+}
+
+fn get_closest(agents: & Vec<Agent> , ag: &Agent) -> i32
+{
+//    let mut close = agents.iter().filter(|t| t.)
+    let mut dist: i32 = 420;
+    let mut id: i32 = -1;
+    for i in 0..agents.len()
+    {
+        if agents[i].player == ag.player
+        {    
+            continue
+        }
+        let tmp = get_dist(ag, &agents[i]);
+        if tmp < dist
+        {
+            dist = tmp;
+            id = agents[i].id;
+        }
+    }
+    return id
 }
 
 fn main() {
@@ -70,8 +108,8 @@ fn main() {
         let optimal_range = parse_input!(inputs[3], i32); // Maximum manhattan distance for greatest damage output
         let soaking_power = parse_input!(inputs[4], i32); // Damage output within optimal conditions
         let splash_bombs = parse_input!(inputs[5], i32); // Number of splash bombs this can throw this game
-        agents.extend([Agent{id, player, x: -1, y: -1, cooldown: shoot_cooldown,
-            splash_bombs, wetness: 0, optimal_range, soaking_power,}])
+        agents.extend([Agent{id, player, pos: Coords {x: -1, y: -1}, cooldown: shoot_cooldown,
+            splash_bombs, wetness: 0, optimal_range, soaking_power, alive: true}]);
     }
     let mut input_line = String::new();
     io::stdin().read_line(&mut input_line).unwrap();
@@ -89,12 +127,13 @@ fn main() {
             let x = parse_input!(inputs[3*j], i32); // X coordinate, 0 is left edge
             let y = parse_input!(inputs[3*j+1], i32); // Y coordinate, 0 is top edge
             let tile_type = parse_input!(inputs[3*j+2], i32);
-            grid.extend([Tile{x, y, cover: tile_type,}]);
+            grid.extend([Tile{pos: Coords {x: -1, y: -1}, cover: tile_type,}]);
         }
     }
 
     // game loop
     loop {
+        set_dead(&mut agents);
         let mut input_line = String::new();
         io::stdin().read_line(&mut input_line).unwrap();
         let agent_count = parse_input!(input_line, i32);
@@ -109,84 +148,61 @@ fn main() {
             let splash_bombs = parse_input!(inputs[4], i32);
             let wetness = parse_input!(inputs[5], i32); // Damage (0-100) this agent has taken
             update_agent(&mut agents, id, x, y, cooldown, splash_bombs, wetness);
-//          agents.extend([Agent{id, player: -1, x, y, cooldown, splash_bombs, wetness, optimal_range: -1, soaking_power: -1,}])
         }
+        remove_dead(&mut agents);
         let mut input_line = String::new();
         io::stdin().read_line(&mut input_line).unwrap();
         let my_agent_count = parse_input!(input_line, usize); // Number of alive agents controlled by you
         eprintln!("agents {}, mine {}, len {}", agent_count, my_agent_count, agents.len());
-        for k in 0..height
-        {
-            for l in 0..width
-            {
-                if grid[(k * width + l) as usize].cover > 0
-                {
-                    eprintln!("{}:{} : {}", l, k, grid[(k * width + l) as usize].cover);
-                }
-            }
-        }
         for j in 0..agent_count as usize
         {
-            //eprintln!("my_id: {}, agent[{}]: {:?}", my_id, j, agents[j]);
+            //eprintln!("agent[{}]: {:?}", j, agents[j]);
             if agents[j].player == my_id
             {
-                //eprintln!("agent_count: {}", agent_count);
-                let mut wet: i32 = -1;
-                let mut shoot_id: i32 = -1;
-                let mut cover: i32 = 42;
-                let mut move_x: i32 = agents[j].x;
-                let mut move_y: i32 = agents[j].y;
-                for i in 0..agent_count as usize
+                let close = get_closest(&agents, &agents[j]);
+                let tmp: Vec<_> = agents.iter().filter(|t| t.id == close).cloned().collect();
+                eprintln!("tmp: {:?}", tmp[0]);
+                if get_dist(&agents[j], &tmp[0]) <= 2
                 {
-                    if agents[i].player != my_id && get_distance(&(agents[j]), &(agents[i])) <= agents[j].optimal_range
-                    {
-                        if agents[j].x < agents[i].x
-                        {
-                            eprintln!("agent: {}, cover: {}", agents[j].id, grid[(agents[i].y * width + agents[i].x - 1) as usize].cover);
-                            if grid[(agents[i].y * width + agents[i].x - 1) as usize].cover < cover
-                            {
-                                cover = grid[(agents[i].y * width + agents[i].x - 1) as usize].cover;
-                                shoot_id = agents[i].id;
-                            }
-                        }
-                        else
-                        {
-                            if grid[(agents[i].y * width + agents[i].x + 1) as usize].cover < cover
-                            {
-                                cover = grid[(agents[i].y * width + agents[i].x + 1) as usize].cover;
-                                shoot_id = agents[i].id;
-                            }
-                        }
-                        
-//                        wet = agents[i].wetness;
-                        shoot_id = agents[i].id as i32;
-                    }
+                    println!("SHOOT {}", tmp[0].id);
+                    continue
                 }
-                if agents[j].x < 6
+                if get_dist(&agents[j], &tmp[0]) <= agents[j].optimal_range
                 {
-                    if grid[((agents[j].y + 1) * width + (agents[j].x + 1)) as usize].cover > grid[((agents[j].y - 1) * width + (agents[j].x + 1)) as usize].cover
-                    {
-                        move_y += 1;
-                    }
-                    else
-                    {
-                        move_y -= 1;
-                    }
+                    println!("THROW {} {}", tmp[0].pos.x, tmp[0].pos.y);
+                    continue
                 }
                 else
                 {
-                    if grid[((agents[j].y + 1) * width + (agents[j].x - 1)) as usize].cover > grid[((agents[j].y - 1) * width + (agents[j].x - 1)) as usize].cover
+                    println!("MOVE {} {}", tmp[0].pos.x, tmp[0].pos.y);
+                    continue
+                }
+                let mut aim = Coords {x: -1, y: -1,};
+                let mut aim_value: i32 = -1;
+                for i in 0..grid.len()
+                {
+                    let mut temp: i32 = 0;
+                    for x in -1..1
                     {
-                        move_y += 1;
+                        for y in -1..1
+                        {
+                            let t: Vec<_> = agents.iter().filter(|t| t.pos.x == x && t.pos.y == y).cloned().collect();
+                            temp += t.len() as i32;
+                            if t.len() > 0 && t[0].player == my_id
+                            {
+                                temp -= 10;
+                            }
+                        }
                     }
-                    else
+                    if temp > aim_value
                     {
-                        move_y -= 1;
+                        aim = grid[i].pos;
+                        aim_value = temp;
                     }
                 }
-            println!("SHOOT {}; MOVE {} {}; MESSAGE {}", shoot_id, move_x, move_y, debug);
-            debug += 1;
             }
         }
+//        println!("MOVE 10 3; THROW 10 3");
+  //      println!("MOVE 1 10; THROW 2 8; MESSAGE let's die");
     }
 }
