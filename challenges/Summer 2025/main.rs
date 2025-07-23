@@ -63,13 +63,13 @@ fn update_agent(agents: &mut Vec<Agent>, id: i32, x: i32, y: i32, cooldown: i32,
 
 fn get_dist(pos_a: &Coords, pos_b: &Coords) -> i32
 {
-    return
-    (cmp::max(pos_a.x, pos_b.x) - cmp::min(pos_a.x, pos_b.x))
-    + (cmp::max(pos_a.y, pos_b.y) - cmp::min(pos_a.y, pos_b.y))
+    eprintln!("get_dist [{}:{}] [{}:{}] {}", pos_a.x, pos_a.y, pos_b.x, pos_b.y, (cmp::max(pos_a.x, pos_b.x) - cmp::min(pos_a.x, pos_b.x)) + (cmp::max(pos_a.y, pos_b.y) - cmp::min(pos_a.y, pos_b.y)));
+    return (cmp::max(pos_a.x, pos_b.x) - cmp::min(pos_a.x, pos_b.x)) + (cmp::max(pos_a.y, pos_b.y) - cmp::min(pos_a.y, pos_b.y))
 }
 
 fn get_closest(agents: & Vec<Agent> , ag: &Agent) -> i32
 {
+    eprintln!("get_close");
 //    let mut close = agents.iter().filter(|t| t.)
     let mut dist: i32 = 420;
     let mut id: i32 = -1;
@@ -87,6 +87,29 @@ fn get_closest(agents: & Vec<Agent> , ag: &Agent) -> i32
         }
     }
     return id
+}
+
+fn get_score(p: Coords, grid: &Vec<Tile>, agents: &Vec<Agent>, width: i32, my_id: i32) -> i32
+{
+    let mut score = 0;
+
+    eprintln!("get_score");
+    for x in -1..2
+    {
+        for y in -1..2
+        {
+            let t: Vec<_> = agents.iter()
+                .filter(|t| t.pos.x == grid[(p.y * width + p.x) as usize].pos.x + x && t.pos.y == grid[(p.y * width + p.x) as usize].pos.y + y)
+                .cloned().collect();
+            score += t.len() as i32;
+            if t.len() > 0 && t[0].player == my_id
+            {
+                score -= 10;
+            }
+        }
+    }
+    eprintln!("get_score_out {}", score);
+    return score
 }
 
 fn main() {
@@ -127,7 +150,7 @@ fn main() {
             let x = parse_input!(inputs[3*j], i32); // X coordinate, 0 is left edge
             let y = parse_input!(inputs[3*j+1], i32); // Y coordinate, 0 is top edge
             let tile_type = parse_input!(inputs[3*j+2], i32);
-            grid.extend([Tile{pos: Coords {x: x, y: y}, cover: tile_type,}]);
+            grid.extend([Tile{pos: Coords {x, y}, cover: tile_type,}]);
         }
     }
 
@@ -154,125 +177,77 @@ fn main() {
         io::stdin().read_line(&mut input_line).unwrap();
         let my_agent_count = parse_input!(input_line, usize); // Number of alive agents controlled by you
         eprintln!("agents {}, mine {}, len {}", agent_count, my_agent_count, agents.len());
-        for j in 0..agent_count as usize
+        for a in 0..agent_count as usize
         {
+            let tile_1: Coords = Coords {x:2, y:2};
+            let tile_2: Coords = Coords {x:2, y:9};
+            let tile_3: Coords = Coords {x:width - 3, y:2};
+            let tile_4: Coords = Coords {x:width - 3, y:height - 3};
             //eprintln!("agent[{}]: {:?}", j, agents[j]);
-            if agents[j].player == my_id
+
+            if agents[a].player == my_id
             {
-                let mut aim = Coords {x: -1, y: -1,};
-                let mut aim_value: i32 = -1;
-                for i in 1..grid.len()
+                if agents[a].pos.x < 5 || agents[a].pos.x > width - 5
                 {
-                    let mut temp: i32 = -1;
-                    for x in -1..1
-                    {
-                        for y in -1..1
-                        {
-                            if grid[i].pos.x + x < 0 || grid[i].pos.y + y < 0 || grid[i].pos.x + x >= width || grid[i].pos.y + y >= height
-                            {
-                                //eprintln!("stop {} {} | {} {} | {}", grid[i].pos.x, grid[i].pos.y, x, y, i);
-                                continue
-                            }
-                            let t: Vec<_> = agents.iter().filter(|t| t.pos.x == grid[i].pos.x + x && t.pos.y == grid[i].pos.y + y)
-                                .cloned().collect();
-                            temp += t.len() as i32;
-                            //eprintln!("{}:{} {}", x, y, t.len());
-                            if t.len() > 0 && t[0].player == my_id
-                            {
-                                temp -= 10;
-                            }
-                        }
-                    }
-                    if temp > aim_value
-                    {
-                        aim.x = grid[i].pos.x;
-                        aim.y = grid[i].pos.y;
-                        aim_value = temp;
-                        eprintln!("verif aim {}:{}", aim.x, aim.y);
-                    }
-                }
-                eprintln!("{}: {:?}", agents[j].id, aim);
-                if get_dist(&agents[j].pos, &aim) <= 2
-                {
-                    let t: Vec<_> = agents.iter().filter(|t| t.pos.x == agents[j].pos.x && t.pos.y == agents[j].pos.x).cloned().collect();
-                    println!("HUNKER_DOWN");
-                    //println!("SHOOT {}", t[0].id);
-                }
-                else if get_dist(&agents[j].pos, &aim) <= 4 && agents[j].splash_bombs > 0
-                {
-                    println!("THROW {} {}", aim.x, aim.y);
-                }
-                else if agents[j].splash_bombs > 0
-                {
-                    let tmp_x = aim.x;
-                    let tmp_y = aim.y;
-                    while get_dist(&agents[j].pos, &aim) > 4
-                    {
-                        eprintln!("debug 2, {}:{}", aim.x, aim.y);
-                        if (agents[j].pos.x - aim.x).abs() > (agents[j].pos.y - aim.y).abs()
-                        {
-                            if agents[j].pos.x < aim.x
-                            {
-                                aim.x -= 1;
-                            }
-                            else
-                            {
-                                aim.x += 1;
-                            }
-                        }
-                        else
-                        {
-                            if agents[j].pos.y < aim.y
-                            {
-                                aim.y -= 1;
-                            }
-                            else
-                            {
-                                aim.y += 1;
-                            }
-                        }
-                    }
-                    println!("MOVE {} {}; THROW {} {}", tmp_x, tmp_y, aim.x, aim.y);
+                    println!("HUNKER_DOWN; MESSAGE I'll do nothing");
                 }
                 else
                 {
-                    let close = get_closest(&agents, &agents[j]);
-                    let t: Vec<_> = agents.iter().filter(|t| t.id == close).cloned().collect();
-                    if get_dist(&agents[j].pos, &t[0].pos) <= 2
+                    eprintln!("if");
+                    if get_score(tile_1, &grid, &agents, width, my_id) > 4
                     {
-                        //println!("SHOOT {}", t[0].id);
-                        println!("HUNKER_DOWN");
-                        continue
+                        eprintln!("agent[{}]: {:?}", a, agents[a]);
+                        if get_dist(&tile_1, &agents[a].pos) > 4
+                        {
+                            println!("MOVE 5 3");
+                        }
+                        else
+                        {
+                            println!("THROW 2 2");
+                        }
                     }
-                    else if get_dist(&agents[j].pos, &t[0].pos) <= agents[j].optimal_range
+                    else if get_score(tile_2, &grid, &agents, width, my_id) > 4
                     {
-                        println!("THROW {} {}", t[0].pos.x, t[0].pos.y);
-                        continue
+                        eprintln!("else if");
+                        if get_dist(&tile_2, &agents[a].pos) > 5
+                        {
+                            println!("MOVE 5 8");
+                        }
+                        else
+                        {
+                            println!("MOVE 5 8; THROW 2 9");
+                        }
+                    }
+                    else if get_score(tile_3, &grid, &agents, width, my_id) > 4
+                    {
+                        eprintln!("else if 2");
+                        if get_dist(&tile_3, &agents[a].pos) > 5
+                        {
+                            println!("MOVE {} 3", width - 6);
+                        }
+                        else
+                        {
+                            println!("MOVE {} 3; THROW {} 2", width - 6, width - 3);
+                        }
+                    }
+                    else if get_score(tile_4, &grid, &agents, width, my_id) > 4
+                    {
+                        eprintln!("else");
+                        if get_dist(&tile_4, &agents[a].pos) > 5
+                        {
+                            println!("MOVE {} {}", width - 6, height - 4);
+                        }
+                        else
+                        {
+                            println!("MOVE {} {}; THROW {} {}", width - 6, height - 4, width - 3, height - 3);
+                        }
                     }
                     else
                     {
-                        println!("MOVE {} {}", t[0].pos.x, t[0].pos.y);
-                        continue
+                        println!("HUNKER_DOWN; MESSAGE why am I here ?")
                     }
                 }
             }
         }
     }
 }
-
-   //             eprintln!("tmp: {:?}", tmp[0]);
-    //            if get_dist(&agents[j], &tmp[0]) <= 2
-     //           {
-      //              println!("SHOOT {}", tmp[0].id);
-       //             continue
-        //        }
-         //       if get_dist(&agents[j], &tmp[0]) <= agents[j].optimal_range
-          //      {
-           //         println!("THROW {} {}", tmp[0].pos.x, tmp[0].pos.y);
-            //        continue
-             //   }
-              //  else
-               // {
-                //    println!("MOVE {} {}", tmp[0].pos.x, tmp[0].pos.y);
-                 //   continue
-                //}
